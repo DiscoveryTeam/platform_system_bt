@@ -28,6 +28,7 @@
 #include "bta_jv_api.h"
 #include "bta_sys.h"
 #include "port_api.h"
+#include "osi/include/alarm.h"
 #include "rfcdefs.h"
 
 /*****************************************************************************
@@ -97,7 +98,8 @@ typedef struct {
   uint32_t handle;      /* The connection handle */
   uint8_t state;        /* state: see above enum */
   tBTA_JV_PM_ID app_id; /* JV app specific id indicating power table to use */
-  RawAddress peer_bd_addr; /* Peer BD address */
+  BD_ADDR peer_bd_addr; /* Peer BD address */
+  alarm_t         *idle_timer; /* intermediate idle timer for paricular scb */
 } tBTA_JV_PM_CB;
 
 enum {
@@ -405,5 +407,6 @@ extern void bta_jv_l2cap_start_server_le(tBTA_JV_MSG* p_data);
 extern void bta_jv_l2cap_stop_server_le(tBTA_JV_MSG* p_data);
 extern void bta_jv_l2cap_write_fixed(tBTA_JV_MSG* p_data);
 extern void bta_jv_l2cap_close_fixed(tBTA_JV_MSG* p_data);
+extern void bta_jv_idle_timeout_handler(void *tle);
 
 #endif /* BTA_JV_INT_H */

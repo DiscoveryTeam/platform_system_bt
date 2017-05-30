@@ -664,7 +664,7 @@ uint16_t GAP_ConnGetL2CAPCid(uint16_t gap_handle) {
 
 /*******************************************************************************
  *
- * Function         gap_tx_connect_ind
+** Function         gap_tx_complete_ind
  *
  * Description      Sends out GAP_EVT_TX_EMPTY when transmission has been
  *                  completed.
@@ -679,6 +679,11 @@ void gap_tx_complete_ind(uint16_t l2cap_cid, uint16_t sdu_sent) {
   if ((p_ccb->con_state == GAP_CCB_STATE_CONNECTED) && (sdu_sent == 0xFFFF)) {
     DVLOG(1) << StringPrintf("%s: GAP_EVT_TX_EMPTY", __func__);
     p_ccb->p_callback(p_ccb->gap_handle, GAP_EVT_TX_EMPTY);
+  }
+  else if ((p_ccb->con_state == GAP_CCB_STATE_CONNECTED) && (sdu_sent >= 1))
+  {
+    GAP_TRACE_EVENT("%s: GAP_EVT_TX_DONE", __func__);
+    p_ccb->p_callback (p_ccb->gap_handle, GAP_EVT_TX_DONE);
   }
 }
 

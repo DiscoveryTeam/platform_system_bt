@@ -41,6 +41,7 @@
 #include "hci_internals.h"
 #include "hcidefs.h"
 #include "hcimsgs.h"
+#include "bt_utils.h"
 #include "osi/include/alarm.h"
 #include "osi/include/list.h"
 #include "osi/include/log.h"
@@ -49,6 +50,8 @@
 #include "packet_fragmenter.h"
 
 #define BT_HCI_TIMEOUT_TAG_NUM 1010000
+
+bt_soc_type soc_type;
 
 extern void hci_initialize();
 extern void hci_transmit(BT_HDR* packet);
@@ -697,6 +700,12 @@ static void init_layer_interface() {
   if (!interface_created) {
     // It's probably ok for this to live forever. It's small and
     // there's only one instance of the hci interface.
+    interface.event_dispatcher = data_dispatcher_new("hci_layer");
+    if (!interface.event_dispatcher) {
+      LOG_ERROR(LOG_TAG, "%s could not create upward dispatcher.", __func__);
+      return;
+    }
+    soc_type = get_soc_type();
 
     interface.set_data_cb = set_data_cb;
     interface.transmit_command = transmit_command;

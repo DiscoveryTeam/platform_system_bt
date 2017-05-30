@@ -177,14 +177,10 @@ static bool btif_has_ble_keys(const char* bdstr);
  *  Static functions
  ******************************************************************************/
 
-static int prop2cfg(const RawAddress* remote_bd_addr, bt_property_t* prop) {
-  std::string addrstr;
-  const char* bdstr = addrstr.c_str();
-  if (remote_bd_addr) {
-    addrstr = remote_bd_addr->ToString();
-    bdstr = addrstr.c_str();
-  }
-
+static int prop2cfg(bt_bdaddr_t* remote_bd_addr, bt_property_t* prop) {
+  bdstr_t bdstr = {0};
+  int name_length = 0;
+  if (remote_bd_addr) bdaddr_to_string(remote_bd_addr, bdstr, sizeof(bdstr));
   BTIF_TRACE_DEBUG("in, bd addr:%s, prop type:%d, len:%d", bdstr, prop->type,
                    prop->len);
   char value[1024];
@@ -199,12 +195,16 @@ static int prop2cfg(const RawAddress* remote_bd_addr, bt_property_t* prop) {
                           (int)time(NULL));
       break;
     case BT_PROPERTY_BDNAME:
-      strncpy(value, (char*)prop->val, prop->len);
-      value[prop->len] = '\0';
+      name_length = prop->len > BTM_MAX_LOC_BD_NAME_LEN ? BTM_MAX_LOC_BD_NAME_LEN:
+                                                          prop->len;
+      strncpy(value, (char*)prop->val, name_length);
+         value[name_length]='\0';
       if (remote_bd_addr)
         btif_config_set_str(bdstr, BTIF_STORAGE_PATH_REMOTE_NAME, value);
-      else
+      else {
         btif_config_set_str("Adapter", BTIF_STORAGE_KEY_ADAPTER_NAME, value);
+        btif_config_flush();
+      }
       break;
     case BT_PROPERTY_REMOTE_FRIENDLY_NAME:
       strncpy(value, (char*)prop->val, prop->len);
@@ -780,7 +780,28 @@ bt_status_t btif_storage_remove_bonded_device(
 }
 
 /*******************************************************************************
- *
+**
+** Function         btif_storage_is_device_bonded
+**
+** Description      BTIF storage API - checks if device present in bonded list
+**
+** Returns          BT_STATUS_SUCCESS if the device is bonded
+**                  BT_STATUS_FAIL otherwise
+**
+*******************************************************************************/
+bt_status_t btif_storage_is_device_bonded(bt_bdaddr_t *remote_bd_addr) {
+
+  bdstr_t bdstr;
+  bdaddr_to_string(remote_bd_addr, bdstr, sizeof(bdstr));
+  if((btif_config_exist(bdstr, "LinkKey")) &&
+     (btif_config_exist(bdstr, "LinkKeyType")))
+    return BT_STATUS_SUCCESS;
+  else
+    return BT_STATUS_FAIL;
+}
+
+/*******************************************************************************
+**
  * Function         btif_storage_load_bonded_devices
  *
  * Description      BTIF storage API - Loads all the bonded devices from NVRAM

@@ -223,13 +223,11 @@ extern tBTM_STATUS btm_sec_l2cap_access_req(const RawAddress& bd_addr,
                                             CONNECTION_TYPE conn_type,
                                             tBTM_SEC_CALLBACK* p_callback,
                                             void* p_ref_data);
-extern tBTM_STATUS btm_sec_mx_access_request(const RawAddress& bd_addr,
-                                             uint16_t psm, bool is_originator,
-                                             uint32_t mx_proto_id,
-                                             uint32_t mx_chan_id,
-                                             tBTM_SEC_CALLBACK* p_callback,
-                                             void* p_ref_data);
-extern void btm_sec_conn_req(const RawAddress& bda, uint8_t* dc);
+extern tBTM_STATUS btm_sec_mx_access_request(
+    BD_ADDR bd_addr, uint16_t psm, bool is_originator, uint32_t mx_proto_id,
+    uint32_t mx_chan_id, tBTM_SEC_CALLBACK* p_callback, void* p_ref_data);
+extern  tBTM_STATUS btm_sec_execute_procedure (tBTM_SEC_DEV_REC *p_dev_rec);
+extern void btm_sec_conn_req(uint8_t* bda, uint8_t* dc);
 extern void btm_create_conn_cancel_complete(uint8_t* p);
 
 extern void btm_read_inq_tx_power_timeout(void* data);
