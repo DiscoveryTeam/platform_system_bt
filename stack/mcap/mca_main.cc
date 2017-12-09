@@ -233,14 +233,14 @@ void mca_free_tc_tbl_by_lcid(uint16_t lcid) {
  ******************************************************************************/
 void mca_set_cfg_by_tbl(tL2CAP_CFG_INFO* p_cfg, tMCA_TC_TBL* p_tbl) {
   tMCA_DCB* p_dcb;
-  const tL2CAP_FCR_OPTS* p_opt = NULL;
+  const tL2CAP_FCR_OPTS* p_opt;
   tMCA_FCS_OPT fcs = MCA_FCS_NONE;
 
   if (p_tbl->tcid == MCA_CTRL_TCID) {
     p_opt = &mca_l2c_fcr_opts_def;
   } else {
     p_dcb = mca_dcb_by_hdl(p_tbl->cb_idx);
-    if (p_dcb != NULL) {
+    if (p_dcb) {
       p_opt = &p_dcb->p_chnl_cfg->fcr_opt;
       fcs = p_dcb->p_chnl_cfg->fcs;
     }
@@ -249,8 +249,7 @@ void mca_set_cfg_by_tbl(tL2CAP_CFG_INFO* p_cfg, tMCA_TC_TBL* p_tbl) {
   p_cfg->mtu_present = true;
   p_cfg->mtu = p_tbl->my_mtu;
   p_cfg->fcr_present = true;
-  if (p_opt != NULL)
-    memcpy(&p_cfg->fcr, p_opt, sizeof(tL2CAP_FCR_OPTS));
+  memcpy(&p_cfg->fcr, p_opt, sizeof(tL2CAP_FCR_OPTS));
   if (fcs & MCA_FCS_PRESNT_MASK) {
     p_cfg->fcs_present = true;
     p_cfg->fcs = (fcs & MCA_FCS_USE_MASK);
@@ -294,13 +293,11 @@ void mca_tc_close_ind(tMCA_TC_TBL* p_tbl, uint16_t reason) {
   /* if control channel, notify ccb of the channel close */
   if (p_tbl->tcid == MCA_CTRL_TCID) {
     p_ccb = mca_ccb_by_hdl((tMCA_CL)p_tbl->cb_idx);
-    if(p_ccb != NULL) {
-      mca_ccb_event(p_ccb, MCA_CCB_LL_CLOSE_EVT, (tMCA_CCB_EVT *)&close);
-    }
-  }
-  /* notify dcb that channel close */
-  else {
-    /* look up dcb  */
+    tMCA_CCB_EVT mca_ccb_evt;
+    mca_ccb_evt.close = close;
+    mca_ccb_event(p_ccb, MCA_CCB_LL_CLOSE_EVT, &mca_ccb_evt);
+  } else {
+    /* notify dcb of the channel close */
     p_dcb = mca_dcb_by_hdl(p_tbl->cb_idx);
     if (p_dcb != NULL) {
       tMCA_DCB_EVT mca_dcb_evt;
@@ -343,13 +340,11 @@ void mca_tc_open_ind(tMCA_TC_TBL* p_tbl) {
   /* if control channel, notify ccb that the channel is open */
   if (p_tbl->tcid == MCA_CTRL_TCID) {
     p_ccb = mca_ccb_by_hdl((tMCA_CL)p_tbl->cb_idx);
-    if(p_ccb != NULL) {
-      mca_ccb_event(p_ccb, MCA_CCB_LL_OPEN_EVT, (tMCA_CCB_EVT *)&open);
-    }
-  }
-  /* must be data channel, notify dcb that channel open */
-  else {
-    /* look up dcb */
+    tMCA_CCB_EVT mca_ccb_evt;
+    mca_ccb_evt.open = open;
+    mca_ccb_event(p_ccb, MCA_CCB_LL_OPEN_EVT, &mca_ccb_evt);
+  } else {
+    /* must be data channel, notify dcb that the channel is open */
     p_dcb = mca_dcb_by_hdl(p_tbl->cb_idx);
 
     /* put lcid in event data */
@@ -385,13 +380,11 @@ void mca_tc_cong_ind(tMCA_TC_TBL* p_tbl, bool is_congested) {
   /* if control channel, notify ccb of congestion */
   if (p_tbl->tcid == MCA_CTRL_TCID) {
     p_ccb = mca_ccb_by_hdl((tMCA_CL)p_tbl->cb_idx);
-    if (p_ccb != NULL) {
-      mca_ccb_event(p_ccb, MCA_CCB_LL_CONG_EVT, (tMCA_CCB_EVT *) &is_congested);
-    }
-  }
-  /* notify dcb that channel open */
-  else {
-    /* look up dcb by cb_idx */
+    tMCA_CCB_EVT mca_ccb_evt;
+    mca_ccb_evt.llcong = is_congested;
+    mca_ccb_event(p_ccb, MCA_CCB_LL_CONG_EVT, &mca_ccb_evt);
+  } else {
+    /* notify dcb that channel open */
     p_dcb = mca_dcb_by_hdl(p_tbl->cb_idx);
     if (p_dcb != NULL) {
       tMCA_DCB_EVT mca_dcb_evt;
